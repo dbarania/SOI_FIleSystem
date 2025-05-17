@@ -3,9 +3,14 @@
 #include <stdio.h>
 #include <stdint.h>
 #define MAX_FILENAME 64
-#define MAGIC_NUMBER 0xFEE7
+#define MAGIC_NUMBER 0x0B00B1E5
+#define ERROR_MAGIC_NUMBER 0xDEAD2BAD
+#define SUPERBLOCK_SIZE 8
+#define FILE_ENTRY_SIZE MAX_FILENAME + 16
+
+#pragma pack(1)
 typedef struct SuperBlock {
-    uint16_t MagicNumber;
+    uint32_t MagicNumber;
     uint32_t max_files;
     uint32_t num_files;
     uint32_t num_blocks;
@@ -16,10 +21,10 @@ typedef struct SuperBlock {
 } SuperBlock;
 
 typedef struct BitMap {
-    size_t size;
+    uint32_t size;
     uint8_t map[];
 } BitMap;
-
+#pragma pack(1)
 typedef struct FileEntry {
     char name[MAX_FILENAME];
     uint32_t size;
@@ -35,19 +40,19 @@ typedef struct FileTable {
 
 typedef struct MetaData {
     SuperBlock super_block;
-    BitMap bit_map;
-    FileTable table;
+    BitMap *bit_map;
+    FileTable *table;
 } MetaData;
 
 SuperBlock readSuperBlock(FILE *fp);
 
 int writeSuperBlock(const SuperBlock *super_block, FILE *fp);
 
-BitMap readBitMap(FILE *fp);
+BitMap *readBitMap(FILE *fp);
 
 int writeBitMap(const BitMap *map, FILE *fp);
 
-FileTable readFileTable(FILE *fp);
+FileTable *readFileTable(FILE *fp);
 
 int writeFileTable(const FileTable *table, FILE *fp);
 
