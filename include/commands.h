@@ -1,12 +1,6 @@
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
-#include <stdio.h>
-#include  <unistd.h>
-#include <inttypes.h>
-#include <getopt.h>
-#include <string.h>
-
 
 #define STR_NFILES "n_files"
 #define STR_NBLOCKS "n_blocks"

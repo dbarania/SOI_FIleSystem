@@ -1,5 +1,5 @@
 #include "../include/utils.h"
-
+#include <string.h>
 
 int ends_with(const char *str, const char *suffix) {
     if (!str || !suffix)

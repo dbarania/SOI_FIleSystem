@@ -1,0 +1,62 @@
+#ifndef TYPES_H
+#define TYPES_H
+#include <stdio.h>
+#include <stdint.h>
+#define MAX_FILENAME 64
+#define MAGIC_NUMBER 0xFEE7
+typedef struct SuperBlock {
+    uint16_t MagicNumber;
+    uint32_t max_files;
+    uint32_t num_files;
+    uint32_t num_blocks;
+    uint32_t block_size;
+    uint32_t bit_map_start;
+    uint32_t file_table_start;
+    uint32_t data_start;
+} SuperBlock;
+
+typedef struct BitMap {
+    size_t size;
+    uint8_t map[];
+} BitMap;
+
+typedef struct FileEntry {
+    char name[MAX_FILENAME];
+    uint32_t size;
+    uint32_t start_block;
+    uint32_t num_blocks;
+    uint32_t last_byte; // To keep track of unused bytes in last used block when internal fragmentation happens
+} FileEntry;
+
+typedef struct FileTable {
+    size_t size;
+    FileEntry table[];
+} FileTable;
+
+typedef struct MetaData {
+    SuperBlock super_block;
+    BitMap bit_map;
+    FileTable table;
+} MetaData;
+
+SuperBlock readSuperBlock(FILE *fp);
+
+int writeSuperBlock(const SuperBlock *super_block, FILE *fp);
+
+BitMap readBitMap(FILE *fp);
+
+int writeBitMap(const BitMap *map, FILE *fp);
+
+FileTable readFileTable(FILE *fp);
+
+int writeFileTable(const FileTable *table, FILE *fp);
+
+FileEntry readFileEntry(FILE *fp);
+
+int writeFileEntry(const FileEntry *entry, FILE *fp);
+
+MetaData readMetadata(FILE *fp);
+
+int writeMetaData(const MetaData *header, FILE *fp);
+
+#endif //TYPES_H

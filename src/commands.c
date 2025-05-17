@@ -1,9 +1,13 @@
 #include "../include/commands.h"
 
+#include <stdio.h>
+#include  <unistd.h>
 #include <stdlib.h>
+#include <getopt.h>
+#include <string.h>
 
 int command_create(const char *file_name, int argc, char **argv) {
-    static struct option create_options[]{
+    static struct option create_options[] = {
         {STR_NFILES, required_argument, 0, 0},
         {STR_NBLOCKS, required_argument, 0, 0},
         {STR_BLOCKSIZE, required_argument, 0, 0},
@@ -34,19 +38,20 @@ int command_create(const char *file_name, int argc, char **argv) {
         else {
             return -1;
         }
+
     }
     return 1;
 }
 
 int command_cp_to(const char *file_name, int argc, char **argv) {
-    static struct option cp_to_options[]{
+    static struct option cp_to_options[] = {
         {STR_FILE, required_argument, 0, 'f'}
     };
     return 1;
 }
 
 int command_cp_from(const char *file_name, int argc, char **argv) {
-    static struct option cp_from_options[]{
+    static struct option cp_from_options[] = {
         {STR_FILE, required_argument, 0, 'f'},
         {STR_DESTINATION, required_argument, 0, 'd'}
     };
@@ -58,7 +63,7 @@ int command_list(const char *file_name, int argc, char **argv) {
 }
 
 int command_remove(const char *file_name, int argc, char **argv) {
-    static struct option remove_options[]{
+    static struct option remove_options[] = {
         {STR_FILE, required_argument, 0, 'f'}
     };
     return 1;
@@ -69,7 +74,7 @@ int command_delete(const char *file_name, int argc, char **argv) {
 }
 
 int command_format(const char *file_name, int argc, char **argv) {
-    static struct option format_options[]{
+    static struct option format_options[] = {
         {STR_QUICK,no_argument, 0, 'q'},
         {STR_DEEP,no_argument, 0, 0}
     };
@@ -77,7 +82,7 @@ int command_format(const char *file_name, int argc, char **argv) {
 }
 
 int command_diagnostics(const char *file_name, int argc, char **argv) {
-    static struct option diagnostics_options[]{
+    static struct option diagnostics_options[] = {
         {STR_VERBOSE, required_argument, 0, 'v'}
     };
     return 1;

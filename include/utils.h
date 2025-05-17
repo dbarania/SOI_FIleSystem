@@ -1,6 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
-#include <string.h>
+
 int ends_with(const char *str, const char *suffix);
 
 
