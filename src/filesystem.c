@@ -16,13 +16,9 @@ int create_filesystem(const char *filename, int n_files, int n_blocks, int block
         return -1;
     }
 
-    const int bit_map_bytes = (n_blocks + 7) / 8; // 1 bit per block
-    const int bit_map_blocks = (bit_map_bytes + block_size - 1) / block_size;
-
+    const int bit_map_bytes = (n_blocks + 7) / 8;
     const int file_table_bytes = n_files * FILE_ENTRY_SIZE;
-    const int file_table_blocks = (file_table_bytes + block_size - 1) / block_size;
 
-    const int data_start_block = 1 + bit_map_blocks + file_table_blocks;
 
     MetaData meta;
 
@@ -31,16 +27,17 @@ int create_filesystem(const char *filename, int n_files, int n_blocks, int block
     meta.super_block.num_files = 0;
     meta.super_block.num_blocks = n_blocks;
     meta.super_block.block_size = block_size;
-    meta.super_block.bit_map_start = 1;
-    meta.super_block.file_table_start = 1 + bit_map_blocks;
-    meta.super_block.data_start = data_start_block;
+    meta.super_block.bit_map_start = SUPERBLOCK_SIZE;
+    meta.super_block.file_table_start = meta.super_block.bit_map_start + 4 + bit_map_bytes;
+    meta.super_block.data_start = meta.super_block.file_table_start + file_table_bytes;
 
     meta.bit_map = malloc(sizeof(BitMap) + bit_map_bytes);
     if (!meta.bit_map) {
         fclose(fp);
         return -2;
     }
-    meta.bit_map->size = bit_map_bytes;
+
+    meta.bit_map->size = bit_map_bytes * 8;
     memset(meta.bit_map->map, 0, bit_map_bytes); // mark all blocks as free
 
     meta.table = malloc(sizeof(FileTable) + n_files * sizeof(FileEntry));
@@ -67,8 +64,7 @@ int create_filesystem(const char *filename, int n_files, int n_blocks, int block
         return -5;
     }
 
-    const int blocks_to_fill = n_blocks - data_start_block;
-    for (int i = 0; i < blocks_to_fill; ++i) {
+    for (int i = 0; i < n_blocks; ++i) {
         fwrite(zero_block, block_size, 1, fp);
     }
 
@@ -89,14 +85,29 @@ int list_filesystem() { return 1; }
 
 int remove_from_filesystem(const char *file_name) { return 1; }
 
-int delete_filesystem() { return 1; }
+int delete_filesystem(const char *filesystem_name) {
+    if (remove(filesystem_name) == 0) {
+        printf("Successfully removed filesystem image: %s\n", filesystem_name);
+        return 1;
+    }
+    perror("Error deleting file\n");
+    return -1;
+}
 
-int format_filesystem() { return 1; }
+int format_filesystem() {
+    return 1;
+}
 
-int defragment_filesystem() { return 1; }
+int defragment_filesystem() {
+    return 1;
+}
 
-int diagnostics_of_filesystem() { return 1; }
+int diagnostics_of_filesystem() {
+    return 1;
+}
 
 int load_filesystem(const char *filesystem_name) {
+    filesystem.file = fopen(filesystem_name, "rb+");
+    readMetadata(filesystem.file);
     return 1;
 }

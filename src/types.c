@@ -42,7 +42,7 @@ int writeSuperBlock(const SuperBlock *super_block, FILE *fp) {
         return -1; // Invalid input
     }
     uint32_t magic_number_inverted = to_big_endian(super_block->MagicNumber);
-    printf("%d", magic_number_inverted);
+    // printf("%d", magic_number_inverted);
     if (fwrite(&magic_number_inverted, sizeof(uint32_t), 1, fp) != 1) return -2;
     if (fwrite(&super_block->max_files, sizeof(uint32_t), 1, fp) != 1) return -2;
     if (fwrite(&super_block->num_files, sizeof(uint32_t), 1, fp) != 1) return -2;
@@ -83,7 +83,7 @@ int writeBitMap(const BitMap *map, FILE *fp) {
     if (fwrite(&map->size, sizeof(uint32_t), 1, fp) != 1) {
         return -2;
     }
-    if (fwrite(map->map, sizeof(uint8_t), map->size, fp) != map->size) {
+    if (fwrite(map->map, sizeof(uint8_t), map->size / 8, fp) != map->size) {
         return -3;
     }
     return 0;
@@ -108,7 +108,7 @@ FileTable *readFileTable(FILE *fp) {
 
 int writeFileTable(const FileTable *table, FILE *fp) {
     if (!table || !fp) return -1;
-    if (fwrite(&table->size, sizeof(size_t), 1, fp) != 1) return -2;
+    if (fwrite(&table->size, sizeof(uint32_t), 1, fp) != 1) return -2;
     for (size_t i = 0; i < table->size; i++) {
         if (writeFileEntry(&table->table[i], fp) != 0) return -3;
     }
@@ -169,6 +169,22 @@ int writeMetaData(const MetaData *header, FILE *fp) {
     writeSuperBlock(&header->super_block, fp);
     writeBitMap(header->bit_map, fp);
     writeFileTable(header->table, fp);
+    const int32_t current_pos = ftell(fp);
+    int32_t bytes_left = header->super_block.data_start - current_pos;
+    printf("data start %d\n", header->super_block.data_start);
+    printf("%d", bytes_left);
+    int32_t chunk = 512;
+    uint8_t zeroes[512] = {0};
+    while (bytes_left > 0) {
+        if (bytes_left < chunk) {
+            chunk = bytes_left;
+        }
+        if (fwrite(zeroes, 1, chunk, fp) != chunk) {
+            return -1;
+        }
+
+        bytes_left -= chunk;
+    }
     // if (fwrite(&header->super_block, sizeof(SuperBlock), 1, fp) != 1) return -2;
     // if (writeBitMap(header->bit_map, fp) != 0) return -3;
     // if (writeFileTable(header->table, fp) != 0) return -4;

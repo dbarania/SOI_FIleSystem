@@ -2,10 +2,10 @@
 #define TYPES_H
 #include <stdio.h>
 #include <stdint.h>
-#define MAX_FILENAME 64
+#define MAX_FILENAME 32
 #define MAGIC_NUMBER 0x0B00B1E5
 #define ERROR_MAGIC_NUMBER 0xDEAD2BAD
-#define SUPERBLOCK_SIZE 8
+#define SUPERBLOCK_SIZE 32
 #define FILE_ENTRY_SIZE MAX_FILENAME + 16
 
 #pragma pack(1)
@@ -34,7 +34,7 @@ typedef struct FileEntry {
 } FileEntry;
 
 typedef struct FileTable {
-    size_t size;
+    uint32_t size;
     FileEntry table[];
 } FileTable;
 

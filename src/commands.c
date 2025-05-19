@@ -15,8 +15,8 @@ int command_create(const char *file_name, int argc, char **argv) {
     };
     int option_index = 0;
     int c;
-    int n_files = 128;
-    int n_blocks = 512;
+    int n_files = 16;
+    int n_blocks = 256;
     int block_size = 1024;
     while ((c = getopt_long(argc, argv, "h", create_options, &option_index)) != -1) {
         if (c == 0) {
@@ -134,7 +134,7 @@ int command_remove(const char *file_name, int argc, char **argv) {
 }
 
 int command_delete(const char *file_name, int argc, char **argv) {
-    return 1;
+    return delete_filesystem(file_name);
 }
 
 int command_format(const char *file_name, int argc, char **argv) {
@@ -155,4 +155,3 @@ int command_diagnostics(const char *file_name, int argc, char **argv) {
 int command_defragment(const char *file_name, int argc, char **argv) {
     return 1;
 }
-
