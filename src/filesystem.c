@@ -81,7 +81,13 @@ int copy_to_filesystem(const char *file_name) { return 1; }
 
 int copy_from_filesystem(const char *file_name, const char *destination) { return 1; }
 
-int list_filesystem() { return 1; }
+int list_filesystem() {
+    FileTable *table = filesystem.data.table;
+    for (uint32_t i = 0; table->size; ++i) {
+        printf("%s\n", table->table[i].name);
+    }
+    return 1;
+}
 
 int remove_from_filesystem(const char *file_name) { return 1; }
 

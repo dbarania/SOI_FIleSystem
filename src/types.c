@@ -10,29 +10,28 @@ SuperBlock readSuperBlock(FILE *fp) {
         block.MagicNumber = ERROR_MAGIC_NUMBER;
         return block;
     }
-
-    uint32_t buf[8];
-    size_t items_read = fread(buf, sizeof(uint32_t), 8, fp);
-
-    if (items_read != 8) {
+    size_t items_read = fread(&block, sizeof(SuperBlock),1,fp);
+    // uint32_t buf[8];
+     // = fread(buf, sizeof(uint32_t), 8, fp);
+    if (items_read != 1) {
         block.MagicNumber = ERROR_MAGIC_NUMBER;
         return block;
     }
 
-    block.MagicNumber = to_big_endian(buf[0]);
+    block.MagicNumber = to_big_endian(block.MagicNumber);
 
     if (block.MagicNumber != MAGIC_NUMBER) {
         block.MagicNumber = ERROR_MAGIC_NUMBER;
         return block;
     }
-
-    block.max_files = buf[1];
-    block.num_files = buf[2];
-    block.num_blocks = buf[3];
-    block.block_size = buf[4];
-    block.bit_map_start = buf[5];
-    block.file_table_start = buf[6];
-    block.data_start = buf[7];
+    //
+    // block.max_files = buf[1];
+    // block.num_files = buf[2];
+    // block.num_blocks = buf[3];
+    // block.block_size = buf[4];
+    // block.bit_map_start = buf[5];
+    // block.file_table_start = buf[6];
+    // block.data_start = buf[7];
 
     return block;
 }
@@ -148,7 +147,8 @@ int writeFileEntry(const FileEntry *entry, FILE *fp) {
 MetaData readMetadata(FILE *fp) {
     MetaData meta = {0};
     if (!fp) return meta;
-    fread(&meta.super_block, sizeof(SuperBlock), 1, fp);
+    meta.super_block = readSuperBlock(fp);
+    // fread(&meta.super_block, sizeof(SuperBlock), 1, fp);
     meta.bit_map = readBitMap(fp);
     if (!meta.bit_map) {
         fprintf(stderr, "Failed to read BitMap\n");
