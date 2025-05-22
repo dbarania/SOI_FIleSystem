@@ -1,10 +1,10 @@
-#include "../include/commands.h"
+#include "commands.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
-#include "../include/filesystem.h"
+#include "filesystem.h"
 
 int command_create(const char *file_name, int argc, char **argv) {
     static struct option create_options[] = {
@@ -16,8 +16,8 @@ int command_create(const char *file_name, int argc, char **argv) {
     int option_index = 0;
     int c;
     int n_files = 16;
-    int n_blocks = 256;
-    int block_size = 1024;
+    int n_blocks = 128;
+    int block_size = 512;
     while ((c = getopt_long(argc, argv, "h", create_options, &option_index)) != -1) {
         if (c == 0) {
             const char *name = create_options[option_index].name;
@@ -44,8 +44,8 @@ int command_cp_to(const char *file_name, int argc, char **argv) {
     };
     int c;
     int option_index = 0;
-    const char *file_path = "";
-    while ((c = getopt_long(argc, argv, "f", cp_to_options, &option_index)) != -1) {
+    char *file_path = "";
+    while ((c = getopt_long(argc, argv, "f:", cp_to_options, &option_index)) != -1) {
         if (c == 0) {
             const char *name = cp_to_options[option_index].name;
             if (strcmp(name, STR_FILE) == 0) {

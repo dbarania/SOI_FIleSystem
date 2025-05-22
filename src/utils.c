@@ -1,4 +1,4 @@
-#include "../include/utils.h"
+#include "utils.h"
 #include <string.h>
 
 int ends_with(const char *str, const char *suffix) {
@@ -17,3 +17,4 @@ uint32_t to_big_endian(const uint32_t val) {
            ((val << 8)  & 0xFF0000)   |
            ((val << 24) & 0xFF000000);
 }
+

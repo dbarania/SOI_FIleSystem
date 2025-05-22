@@ -1,7 +1,7 @@
-#include "../include/types.h"
+#include "types.h"
 
 #include <stdlib.h>
-#include "../include/utils.h"
+#include "utils.h"
 
 SuperBlock readSuperBlock(FILE *fp) {
     SuperBlock block = {0};
@@ -90,10 +90,10 @@ int writeBitMap(const BitMap *map, FILE *fp) {
 
 FileTable *readFileTable(FILE *fp) {
     if (!fp) return NULL;
+    uint32_t size;
+    if (fread(&size, sizeof(uint32_t), 1, fp) != 1) return NULL;
 
-    size_t size;
-    if (fread(&size, sizeof(size_t), 1, fp) != 1) return NULL;
-
+//TODO Size tutaj jset 0 co znaczy że nie masz dostępu do tej pamięci, musisz jakoś podać z max_files
     FileTable *table = malloc(sizeof(FileTable) + size * sizeof(FileEntry));
     if (!table) return NULL;
 
