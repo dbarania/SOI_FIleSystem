@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 3.29)
 project(SOI_FileSystem C)
 set(CMAKE_C_STANDARD 11)
 

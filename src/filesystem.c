@@ -46,7 +46,7 @@ int create_filesystem(const char *filename, int n_files, int n_blocks, int block
         fclose(fp);
         return -3;
     }
-    meta.table->size = 0; // no files yet
+    meta.table->size = n_files; // no files yet
 
     if (writeMetaData(&meta, fp) != 0) {
         fprintf(stderr, "Failed to write metadata\n");
@@ -88,10 +88,6 @@ int copy_to_filesystem(const char *file_name) {
     const uint32_t size = ftell(file);
     fseek(file, 0,SEEK_SET);
 
-
-
-
-
     const uint32_t last_byte = size % block_size;
     const uint32_t num_blocks = (last_byte == 0) ? size / block_size : size / block_size + 1;
     const int start_block = find_free_blocks(num_blocks);
@@ -109,16 +105,15 @@ int copy_to_filesystem(const char *file_name) {
     entry->start_block = start_block;
     entry->num_blocks = num_blocks;
     entry->last_byte = last_byte;
-    char *buffer = malloc(block_size);
-    fread(buffer, 1, 1, file);
+    // fread(buffer, 1, 1, file);
     if (add_file_entry(entry) == -1) {
         free(entry);
         return -1;
     }
-    fread(buffer, 1, 1, file);
+    // fread(buffer, 1, 1, file);
     const uint32_t start_byte = filesystem.data.super_block.data_start + start_block * block_size;
     fseek(filesystem.file, start_byte,SEEK_SET);
-    // char *buffer = malloc(block_size);
+    char *buffer = malloc(block_size);
     if (!buffer) {
         perror("malloc failed");
         fclose(file);
@@ -177,6 +172,13 @@ int load_filesystem(const char *filesystem_name) {
     return 1;
 }
 
+int save_filesystem_meta()
+{
+    fseek(filesystem.file, 0, SEEK_SET);
+    writeMetaData(&filesystem.data,filesystem.file);
+    return 1;
+}
+
 int check_block(const uint32_t block_index) {
     const uint32_t byte_index = block_index / 8;
     const uint8_t bit_index = block_index % 8;
@@ -219,8 +221,13 @@ int add_file_entry(const FileEntry *entry) {
     if (filesystem.data.super_block.num_files >= filesystem.data.super_block.max_files) {
         return -1;
     }
-    const uint32_t size = filesystem.data.table->size;
+    const uint32_t size = filesystem.data.super_block.num_files;
     memcpy(&filesystem.data.table->table[size], entry, FILE_ENTRY_SIZE);
-    filesystem.data.table->size++;
+    // filesystem.data.table->size++;
+    for (uint32_t block_id = 0; block_id < entry->num_blocks; ++block_id)
+    {
+        set_block(entry->start_block + block_id);
+    }
+    filesystem.data.super_block.num_files++;
     return 1;
 }

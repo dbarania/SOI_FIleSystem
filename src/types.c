@@ -24,15 +24,6 @@ SuperBlock readSuperBlock(FILE *fp) {
         block.MagicNumber = ERROR_MAGIC_NUMBER;
         return block;
     }
-    //
-    // block.max_files = buf[1];
-    // block.num_files = buf[2];
-    // block.num_blocks = buf[3];
-    // block.block_size = buf[4];
-    // block.bit_map_start = buf[5];
-    // block.file_table_start = buf[6];
-    // block.data_start = buf[7];
-
     return block;
 }
 
@@ -61,14 +52,14 @@ BitMap *readBitMap(FILE *fp) {
     if (fread(&size, sizeof(uint32_t), 1, fp) != 1) {
         return NULL;
     }
-    BitMap *bitmap = malloc(sizeof(BitMap) + size * sizeof(uint8_t));
+    BitMap *bitmap = malloc(sizeof(BitMap) + size/8);
     if (bitmap == NULL) {
         return NULL;
     }
 
     bitmap->size = size;
 
-    if (fread(bitmap->map, sizeof(uint8_t), size, fp) != size) {
+    if (fread(bitmap->map, sizeof(uint8_t), size/8, fp) != size/8) {
         free(bitmap);
         return NULL;
     }
@@ -171,8 +162,8 @@ int writeMetaData(const MetaData *header, FILE *fp) {
     writeFileTable(header->table, fp);
     const int32_t current_pos = ftell(fp);
     int32_t bytes_left = header->super_block.data_start - current_pos;
-    printf("data start %d\n", header->super_block.data_start);
-    printf("%d", bytes_left);
+    // printf("data start %d\n", header->super_block.data_start);
+    // printf("%d", bytes_left);
     int32_t chunk = 512;
     uint8_t zeroes[512] = {0};
     while (bytes_left > 0) {
