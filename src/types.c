@@ -140,12 +140,11 @@ int writeMetaData(const MetaData *header, FILE *fp) {
         return -1;
     }
     // Write file table
-    items_wrote = fwrite(&header->table->size, sizeof(uint32_t), 1, fp);
-    if (items_wrote != 1) {
-        return -1;
-    }
+    // items_wrote = fwrite(&header->table->size, sizeof(uint32_t), 1, fp);
+    // if (items_wrote != 1) {
+    //     return -1;
+    // }
 
     writeFileTable(header->table, fp);
-
     return 0;
 }

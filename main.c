@@ -1,3 +1,4 @@
+#include <locale.h>
 #include <stdio.h>
 #include <string.h>
 #include "include/commands.h"
@@ -6,6 +7,8 @@
 #define SUFFIX ".img"
 
 int main(int argc, char *argv[]) {
+    setlocale(LC_ALL, "");
+
     if (argc < 3) {
         fprintf(stderr, "Usage: %s <subcommand> [args...]\n", argv[0]);
         return 17;
@@ -39,8 +42,6 @@ int main(int argc, char *argv[]) {
         return command_format(file_name, argc, argv);
     } else if (strcmp(subcommand, "diagnostics") == 0) {
         return command_diagnostics(file_name, argc, argv);
-    } else if (strcmp(subcommand, "defragment") == 0) {
-        return command_defragment(file_name, argc, argv);
     } else {
         return -1;
     }

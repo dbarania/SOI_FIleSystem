@@ -28,6 +28,5 @@ int command_format(const char * file_name, int argc, char **argv);
 
 int command_diagnostics(const char * file_name, int argc, char **argv);
 
-int command_defragment(const char * file_name, int argc, char **argv);
 
 #endif //COMMANDS_H

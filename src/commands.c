@@ -60,7 +60,7 @@ int command_cp_to(const char *file_name, int argc, char **argv) {
     } else {
         load_filesystem(file_name);
         copy_to_filesystem(file_path);
-        // save_filesystem_meta();
+        save_filesystem_meta();
     }
 
     return 1;
@@ -76,7 +76,7 @@ int command_cp_from(const char *file_name, int argc, char **argv) {
     int option_index = 0;
     const char *file_path = "";
     const char *destination_path = "";
-    while ((c = getopt_long(argc, argv, "f:d", cp_from_options, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, "f:d:", cp_from_options, &option_index)) != -1) {
         if (c == 0) {
             const char *name = cp_from_options[option_index].name;
             if (strcmp(name, STR_FILE) == 0) {
@@ -105,32 +105,49 @@ int command_cp_from(const char *file_name, int argc, char **argv) {
 }
 
 int command_list(const char *file_name, int argc, char **argv) {
-    static struct option list_options[] = {
-        {STR_HELP, no_argument, 0, 'h'}
-    };
-    int c;
-    int option_index = 0;
-    while ((c = getopt_long(argc, argv, "f:d", list_options, &option_index)) != -1) {
-        if (c == 0) {
-            const char *name = list_options[option_index].name;
-            if (strcmp(name, STR_HELP) == 0) {
-                printf("Not written yet, you are trying to create a virtual filesystem");
-                return 0;
-            }
-        } else if (c == 'h') {
-            printf("Not written yet, you are trying to create a virtual filesystem");
-            return 0;
-        }
-    }
+    // static struct option list_options[] = {
+    //     {STR_HELP, no_argument, 0, 'h'}
+    // };
+    // int c;
+    // int option_index = 0;
+    // while ((c = getopt_long(argc, argv, "", list_options, &option_index)) != -1) {
+    //     if (c == 0) {
+    //         const char *name = list_options[option_index].name;
+    //         if (strcmp(name, STR_HELP) == 0) {
+    //             printf("Not written yet, you are trying to list a virtual filesystem");
+    //             return 0;
+    //         }
+    //     } else if (c == 'h') {
+    //         printf("Not written yet, you are trying to list a virtual filesystem");
+    //         return 0;
+    //     }
+    // }
     load_filesystem(file_name);
     list_filesystem();
     return 1;
 }
 
 int command_remove(const char *file_name, int argc, char **argv) {
-    static struct option remove_options[] = {
+    static struct option cp_to_options[] = {
         {STR_FILE, required_argument, 0, 'f'}
     };
+    int c;
+    int option_index = 0;
+    char *file_path = "";
+    while ((c = getopt_long(argc, argv, "f:", cp_to_options, &option_index)) != -1) {
+        if (c == 0) {
+            const char *name = cp_to_options[option_index].name;
+            if (strcmp(name, STR_FILE) == 0) {
+                file_path = optarg;
+            }
+        } else if (c == 'f') {
+            file_path = optarg;
+        }
+    }
+
+    load_filesystem(file_name);
+    remove_from_filesystem(file_path);
+    save_filesystem_meta();
     return 1;
 }
 
@@ -139,20 +156,21 @@ int command_delete(const char *file_name, int argc, char **argv) {
 }
 
 int command_format(const char *file_name, int argc, char **argv) {
-    static struct option format_options[] = {
-        {STR_QUICK,no_argument, 0, 'q'},
-        {STR_DEEP,no_argument, 0, 0}
-    };
-    return 1;
+    // static struct option format_options[] =  {
+    //     {STR_QUICK,no_argument, 0, 'q'},
+    //     {STR_DEEP,no_argument, 0, 0}
+    // };
+    load_filesystem(file_name);
+    format_filesystem(true);
+    save_filesystem_meta();
+
 }
 
 int command_diagnostics(const char *file_name, int argc, char **argv) {
-    static struct option diagnostics_options[] = {
-        {STR_VERBOSE, required_argument, 0, 'v'}
-    };
-    return 1;
-}
-
-int command_defragment(const char *file_name, int argc, char **argv) {
+    // static struct option diagnostics_options[] = {
+    //     {STR_VERBOSE, required_argument, 0, 'v'}
+    // };
+    load_filesystem(file_name);
+    diagnostics_of_filesystem();
     return 1;
 }
