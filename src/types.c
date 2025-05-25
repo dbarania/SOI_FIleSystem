@@ -2,80 +2,32 @@
 
 #include <stdlib.h>
 #include "utils.h"
+// private functions
 
-SuperBlock readSuperBlock(FILE *fp) {
-    SuperBlock block = {0};
 
-    if (fp == NULL) {
-        block.MagicNumber = ERROR_MAGIC_NUMBER;
-        return block;
-    }
-    size_t items_read = fread(&block, sizeof(SuperBlock),1,fp);
-    // uint32_t buf[8];
-     // = fread(buf, sizeof(uint32_t), 8, fp);
-    if (items_read != 1) {
-        block.MagicNumber = ERROR_MAGIC_NUMBER;
-        return block;
-    }
+FileEntry readFileEntry(FILE *fp) {
+    FileEntry entry = {0};
 
-    block.MagicNumber = to_big_endian(block.MagicNumber);
+    if (!fp) return entry;
 
-    if (block.MagicNumber != MAGIC_NUMBER) {
-        block.MagicNumber = ERROR_MAGIC_NUMBER;
-        return block;
-    }
-    return block;
+    fread(entry.name, sizeof(char), MAX_FILENAME, fp);
+    fread(&entry.size, sizeof(uint32_t), 1, fp);
+    fread(&entry.start_block, sizeof(uint32_t), 1, fp);
+    fread(&entry.num_blocks, sizeof(uint32_t), 1, fp);
+    fread(&entry.last_byte, sizeof(uint32_t), 1, fp);
+
+    return entry;
 }
 
-int writeSuperBlock(const SuperBlock *super_block, FILE *fp) {
-    if (super_block == NULL || fp == NULL) {
-        return -1; // Invalid input
-    }
-    uint32_t magic_number_inverted = to_big_endian(super_block->MagicNumber);
-    // printf("%d", magic_number_inverted);
-    if (fwrite(&magic_number_inverted, sizeof(uint32_t), 1, fp) != 1) return -2;
-    if (fwrite(&super_block->max_files, sizeof(uint32_t), 1, fp) != 1) return -2;
-    if (fwrite(&super_block->num_files, sizeof(uint32_t), 1, fp) != 1) return -2;
-    if (fwrite(&super_block->num_blocks, sizeof(uint32_t), 1, fp) != 1) return -2;
-    if (fwrite(&super_block->block_size, sizeof(uint32_t), 1, fp) != 1) return -2;
-    if (fwrite(&super_block->bit_map_start, sizeof(uint32_t), 1, fp) != 1) return -2;
-    if (fwrite(&super_block->file_table_start, sizeof(uint32_t), 1, fp) != 1) return -2;
-    if (fwrite(&super_block->data_start, sizeof(uint32_t), 1, fp) != 1) return -2;
-    return 1;
-}
+int writeFileEntry(const FileEntry *entry, FILE *fp) {
+    if (!entry || !fp) return -1;
 
-BitMap *readBitMap(FILE *fp) {
-    if (fp == NULL) {
-        return NULL;
-    }
-    uint32_t size;
-    if (fread(&size, sizeof(uint32_t), 1, fp) != 1) {
-        return NULL;
-    }
-    BitMap *bitmap = malloc(sizeof(BitMap) + size/8);
-    if (bitmap == NULL) {
-        return NULL;
-    }
+    if (fwrite(entry->name, sizeof(char), MAX_FILENAME, fp) != MAX_FILENAME) return -2;
+    if (fwrite(&entry->size, sizeof(uint32_t), 1, fp) != 1) return -2;
+    if (fwrite(&entry->start_block, sizeof(uint32_t), 1, fp) != 1) return -2;
+    if (fwrite(&entry->num_blocks, sizeof(uint32_t), 1, fp) != 1) return -2;
+    if (fwrite(&entry->last_byte, sizeof(uint32_t), 1, fp) != 1) return -2;
 
-    bitmap->size = size;
-
-    if (fread(bitmap->map, sizeof(uint8_t), size/8, fp) != size/8) {
-        free(bitmap);
-        return NULL;
-    }
-    return bitmap;
-}
-
-int writeBitMap(const BitMap *map, FILE *fp) {
-    if (map == NULL || fp == NULL) {
-        return -1;
-    }
-    if (fwrite(&map->size, sizeof(uint32_t), 1, fp) != 1) {
-        return -2;
-    }
-    if (fwrite(map->map, sizeof(uint8_t), map->size / 8, fp) != map->size) {
-        return -3;
-    }
     return 0;
 }
 
@@ -84,7 +36,7 @@ FileTable *readFileTable(FILE *fp) {
     uint32_t size;
     if (fread(&size, sizeof(uint32_t), 1, fp) != 1) return NULL;
 
-//TODO Size tutaj jset 0 co znaczy że nie masz dostępu do tej pamięci, musisz jakoś podać z max_files
+
     FileTable *table = malloc(sizeof(FileTable) + size * sizeof(FileEntry));
     if (!table) return NULL;
 
@@ -107,78 +59,93 @@ int writeFileTable(const FileTable *table, FILE *fp) {
 }
 
 
-FileEntry readFileEntry(FILE *fp) {
-    FileEntry entry = {0};
+// Public functions
 
-    if (!fp) return entry;
-
-    fread(entry.name, sizeof(char), MAX_FILENAME, fp);
-    fread(&entry.size, sizeof(uint32_t), 1, fp);
-    fread(&entry.start_block, sizeof(uint32_t), 1, fp);
-    fread(&entry.num_blocks, sizeof(uint32_t), 1, fp);
-    fread(&entry.last_byte, sizeof(uint32_t), 1, fp);
-
-    return entry;
-}
-
-
-int writeFileEntry(const FileEntry *entry, FILE *fp) {
-    if (!entry || !fp) return -1;
-
-    if (fwrite(entry->name, sizeof(char), MAX_FILENAME, fp) != MAX_FILENAME) return -2;
-    if (fwrite(&entry->size, sizeof(uint32_t), 1, fp) != 1) return -2;
-    if (fwrite(&entry->start_block, sizeof(uint32_t), 1, fp) != 1) return -2;
-    if (fwrite(&entry->num_blocks, sizeof(uint32_t), 1, fp) != 1) return -2;
-    if (fwrite(&entry->last_byte, sizeof(uint32_t), 1, fp) != 1) return -2;
-
-    return 0;
-}
-
-
-MetaData readMetadata(FILE *fp) {
+MetaData readMetaData(FILE *fp) {
     MetaData meta = {0};
-    if (!fp) return meta;
-    meta.super_block = readSuperBlock(fp);
-    // fread(&meta.super_block, sizeof(SuperBlock), 1, fp);
-    meta.bit_map = readBitMap(fp);
-    if (!meta.bit_map) {
-        fprintf(stderr, "Failed to read BitMap\n");
-        return meta;
+    if (!fp) {
+        goto error;
     }
+    fseek(fp, 0, SEEK_SET);
+    // Reading super block
+    size_t items_read = fread(&meta.super_block, sizeof(SuperBlock), 1, fp);
+    if (items_read != 1) {
+        goto error;
+    }
+
+    meta.super_block.magic_number = to_big_endian(meta.super_block.magic_number);
+
+    if (meta.super_block.magic_number != MAGIC_NUMBER) {
+        goto error;
+    }
+
+    // Reading bitmap
+    meta.bit_map = malloc(sizeof(BitMap) + meta.super_block.num_blocks / 8);
+    if (!meta.bit_map) goto error;
+    items_read = fread(&meta.bit_map->size, sizeof(uint32_t), 1, fp);
+    if (items_read != 1) {
+        goto error;
+    }
+    items_read = fread(&meta.bit_map->map, sizeof(uint8_t), meta.bit_map->size / 8, fp);
+
+    if (items_read != meta.bit_map->size / 8 || meta.bit_map->size != meta.super_block.num_blocks) {
+        goto error;
+    }
+
+    // Reading FileTable
     meta.table = readFileTable(fp);
-    if (!meta.table) {
-        fprintf(stderr, "Failed to read FileTable\n");
-        free(meta.bit_map);
-        meta.bit_map = NULL;
-    }
+
+    // meta.table = malloc(sizeof(FileTable) + meta.super_block.max_files * sizeof(FileEntry));
+    // if (!meta.table) goto error;
+    //
+    // items_read = fread(&meta.table->size, sizeof(uint32_t), 1, fp);
+    // if (items_read != 1) {
+    //     goto error;
+    // }
+    // items_read = fread(meta.table->table, sizeof(FileEntry), meta.super_block.max_files, fp);
+    //
+    // if (items_read != meta.table->size || meta.table->size != meta.super_block.max_files) {
+    //     goto error;
+    // }
+    return meta;
+
+error:
+    meta.super_block.magic_number = ERROR_MAGIC_NUMBER;
+    free(meta.bit_map);
+    free(meta.table);
     return meta;
 }
 
-
 int writeMetaData(const MetaData *header, FILE *fp) {
     if (!header || !fp) return -1;
-    writeSuperBlock(&header->super_block, fp);
-    writeBitMap(header->bit_map, fp);
-    writeFileTable(header->table, fp);
-    const int32_t current_pos = ftell(fp);
-    int32_t bytes_left = header->super_block.data_start - current_pos;
-    // printf("data start %d\n", header->super_block.data_start);
-    // printf("%d", bytes_left);
-    int32_t chunk = 512;
-    uint8_t zeroes[512] = {0};
-    while (bytes_left > 0) {
-        if (bytes_left < chunk) {
-            chunk = bytes_left;
-        }
-        if (fwrite(zeroes, 1, chunk, fp) != chunk) {
-            return -1;
-        }
+    // Write super block
 
-        bytes_left -= chunk;
+    uint32_t magic_number_inverted = to_big_endian(header->super_block.magic_number);
+    size_t items_wrote = fwrite(&magic_number_inverted, sizeof(uint32_t), 1, fp);
+    if (items_wrote != 1) {
+        return -1;
     }
-    // if (fwrite(&header->super_block, sizeof(SuperBlock), 1, fp) != 1) return -2;
-    // if (writeBitMap(header->bit_map, fp) != 0) return -3;
-    // if (writeFileTable(header->table, fp) != 0) return -4;
+
+    items_wrote = fwrite(&header->super_block.max_files, sizeof(uint32_t), 7, fp);
+    if (items_wrote != 7) {
+        return -1;
+    }
+    // Write bitmap
+    items_wrote = fwrite(&header->bit_map->size, sizeof(uint32_t), 1, fp);
+    if (items_wrote != 1) {
+        return -1;
+    }
+    items_wrote = fwrite(header->bit_map->map, sizeof(uint8_t), header->bit_map->size / 8, fp);
+    if (items_wrote != header->bit_map->size / 8) {
+        return -1;
+    }
+    // Write file table
+    items_wrote = fwrite(&header->table->size, sizeof(uint32_t), 1, fp);
+    if (items_wrote != 1) {
+        return -1;
+    }
+
+    writeFileTable(header->table, fp);
 
     return 0;
 }

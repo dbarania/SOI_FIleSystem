@@ -6,6 +6,8 @@
 
 int create_filesystem(const char* filename, int n_files, int n_blocks, int block_size);
 
+int save_filesystem_meta();
+
 int copy_to_filesystem(const char* file_name);
 
 int copy_from_filesystem(const char* file_name, const char* destination);

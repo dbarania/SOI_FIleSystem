@@ -10,7 +10,7 @@
 
 #pragma pack(1)
 typedef struct SuperBlock {
-    uint32_t MagicNumber;
+    uint32_t magic_number;
     uint32_t max_files;
     uint32_t num_files;
     uint32_t num_blocks;
@@ -20,6 +20,7 @@ typedef struct SuperBlock {
     uint32_t data_start;
 } SuperBlock;
 
+#pragma pack(1)
 typedef struct BitMap {
     uint32_t size;
     uint8_t map[];
@@ -38,30 +39,39 @@ typedef struct FileTable {
     FileEntry table[];
 } FileTable;
 
+#pragma pack(1)
 typedef struct MetaData {
     SuperBlock super_block;
     BitMap *bit_map;
     FileTable *table;
 } MetaData;
 
-SuperBlock readSuperBlock(FILE *fp);
+// SuperBlock readSuperBlock(FILE *fp);
+//
+// int writeSuperBlock(const SuperBlock *super_block, FILE *fp);
+//
+// BitMap *readBitMap(FILE *fp);
+//
+// int writeBitMap(const BitMap *map, FILE *fp);
+//
+// FileTable *readFileTable(FILE *fp);
+//
+// int writeFileTable(const FileTable *table, FILE *fp);
+//
+// FileEntry readFileEntry(FILE *fp);
+//
+// int writeFileEntry(const FileEntry *entry, FILE *fp);
+//
+// MetaData readMetadata(FILE *fp);
+//
+// int writeMetaData(const MetaData *header, FILE *fp);
 
-int writeSuperBlock(const SuperBlock *super_block, FILE *fp);
-
-BitMap *readBitMap(FILE *fp);
-
-int writeBitMap(const BitMap *map, FILE *fp);
-
-FileTable *readFileTable(FILE *fp);
-
-int writeFileTable(const FileTable *table, FILE *fp);
-
-FileEntry readFileEntry(FILE *fp);
-
-int writeFileEntry(const FileEntry *entry, FILE *fp);
-
-MetaData readMetadata(FILE *fp);
+MetaData readMetaData(FILE *fp);
 
 int writeMetaData(const MetaData *header, FILE *fp);
+
+
+
+// MetaData createMetaData(uint32_t max_file, uint32_t num_blocks, uint32_t block_size);
 
 #endif //TYPES_H

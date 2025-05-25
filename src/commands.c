@@ -60,7 +60,7 @@ int command_cp_to(const char *file_name, int argc, char **argv) {
     } else {
         load_filesystem(file_name);
         copy_to_filesystem(file_path);
-        save_filesystem_meta();
+        // save_filesystem_meta();
     }
 
     return 1;

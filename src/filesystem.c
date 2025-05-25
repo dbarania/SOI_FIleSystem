@@ -4,10 +4,24 @@
 #include <stdlib.h>
 #include <string.h>
 
+// private functions structs
+
 struct {
     FILE *file;
     MetaData data;
 } filesystem;
+
+int find_free_blocks(const uint32_t num_blocks);
+
+void clear_block(const uint32_t block_index);
+
+void set_block(const uint32_t block_index);
+
+int check_block(const uint32_t block_index);
+
+int add_file_entry(const FileEntry *entry);
+
+// Public functions
 
 int create_filesystem(const char *filename, int n_files, int n_blocks, int block_size) {
     FILE *fp = fopen(filename, "wb");
@@ -22,7 +36,7 @@ int create_filesystem(const char *filename, int n_files, int n_blocks, int block
 
     MetaData meta;
 
-    meta.super_block.MagicNumber = MAGIC_NUMBER;
+    meta.super_block.magic_number = MAGIC_NUMBER;
     meta.super_block.max_files = n_files;
     meta.super_block.num_files = 0;
     meta.super_block.num_blocks = n_blocks;
@@ -76,6 +90,11 @@ int create_filesystem(const char *filename, int n_files, int n_blocks, int block
     return 0;
 }
 
+int save_filesystem_meta() {
+    fseek(filesystem.file, 0, SEEK_SET);
+    writeMetaData(&filesystem.data, filesystem.file);
+    return 1;
+}
 
 int copy_to_filesystem(const char *file_name) {
     FILE *file = fopen(file_name, "rb");
@@ -97,27 +116,27 @@ int copy_to_filesystem(const char *file_name) {
         return -1;
     }
     if (strlen(file_name) >= MAX_FILENAME) {
+        printf("Name of the file is too long");
+
         return -1;
     }
-    FileEntry *entry = malloc(FILE_ENTRY_SIZE);
-    strcpy(entry->name, file_name);
-    entry->size = size;
-    entry->start_block = start_block;
-    entry->num_blocks = num_blocks;
-    entry->last_byte = last_byte;
-    // fread(buffer, 1, 1, file);
-    if (add_file_entry(entry) == -1) {
-        free(entry);
+
+    FileEntry entry;
+    strcpy(entry.name, file_name);
+    entry.size = size;
+    entry.start_block = start_block;
+    entry.num_blocks = num_blocks;
+    entry.last_byte = last_byte;
+
+    if (add_file_entry(&entry) == -1) {
         return -1;
     }
-    // fread(buffer, 1, 1, file);
     const uint32_t start_byte = filesystem.data.super_block.data_start + start_block * block_size;
     fseek(filesystem.file, start_byte,SEEK_SET);
     char *buffer = malloc(block_size);
     if (!buffer) {
         perror("malloc failed");
         fclose(file);
-        free(entry);
         return -1;
     }
     uint32_t total_written = 0;
@@ -127,7 +146,6 @@ int copy_to_filesystem(const char *file_name) {
         fwrite(buffer, 1, to_read, filesystem.file);
         total_written += to_read;
     }
-    free(entry);
     free(buffer);
     fclose(file);
     return 1;
@@ -135,49 +153,28 @@ int copy_to_filesystem(const char *file_name) {
 
 int copy_from_filesystem(const char *file_name, const char *destination) { return 1; }
 
-int list_filesystem() {
-    FileTable *table = filesystem.data.table;
-    for (uint32_t i = 0; table->size; ++i) {
-        printf("%s\n", table->table[i].name);
-    }
-    return 1;
-}
+int list_filesystem() { return 1; }
 
 int remove_from_filesystem(const char *file_name) { return 1; }
 
-int delete_filesystem(const char *filesystem_name) {
-    if (remove(filesystem_name) == 0) {
-        printf("Successfully removed filesystem image: %s\n", filesystem_name);
-        return 1;
-    }
-    perror("Error deleting file\n");
-    return -1;
-}
+int delete_filesystem() { return 1; }
 
-int format_filesystem() {
-    return 1;
-}
+int format_filesystem() { return 1; }
 
-int defragment_filesystem() {
-    return 1;
-}
+int defragment_filesystem() { return 1; }
 
-int diagnostics_of_filesystem() {
-    return 1;
-}
+int diagnostics_of_filesystem() { return 1; }
 
 int load_filesystem(const char *filesystem_name) {
     filesystem.file = fopen(filesystem_name, "rb+");
-    filesystem.data = readMetadata(filesystem.file);
+    filesystem.data = readMetaData(filesystem.file);
+    if (filesystem.data.super_block.magic_number != MAGIC_NUMBER) {
+        return -1;
+    }
     return 1;
 }
 
-int save_filesystem_meta()
-{
-    fseek(filesystem.file, 0, SEEK_SET);
-    writeMetaData(&filesystem.data,filesystem.file);
-    return 1;
-}
+// Private functions definition
 
 int check_block(const uint32_t block_index) {
     const uint32_t byte_index = block_index / 8;
@@ -224,8 +221,7 @@ int add_file_entry(const FileEntry *entry) {
     const uint32_t size = filesystem.data.super_block.num_files;
     memcpy(&filesystem.data.table->table[size], entry, FILE_ENTRY_SIZE);
     // filesystem.data.table->size++;
-    for (uint32_t block_id = 0; block_id < entry->num_blocks; ++block_id)
-    {
+    for (uint32_t block_id = 0; block_id < entry->num_blocks; ++block_id) {
         set_block(entry->start_block + block_id);
     }
     filesystem.data.super_block.num_files++;
